@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: views/Feed.js</title>
+    
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+    
+    <h1 class="page-title">Source: views/Feed.js</h1>
+    
+    
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source"><code>/*Copyright (C) 2013 David Orchard
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+*/
+
+/** 
+ * FeedView view for the feed including collections
+ * @module FeedView
+ */
+define(function(require) {
+  
+   var $ = require('jquery'),
+      _ = require('underscore'),
+      Backbone = require('backbone'),
+      FeedModel = require('models/Feed'),
+      FeedItemsCollectionView = require('views/FeedItemsCollection')
+  
+  /**
+   * @exports FeedView
+   * @constructor
+   */    
+  return Backbone.View.extend({
+    events : {
+       'click .searchsubmit'            : 'search',
+       'click .refreshsubmit'           : 'refresh'
+     },
+
+     el: $( '.feedcontainer'),  
+
+  /** 
+   * restores any previous search query state
+   * @instance
+   */
+    initialize: function(){
+      console.log("An object of FeedView was created");
+      this.model.on('reset', _.bind(this.render, this));
+      this.feedModel = new FeedModel();
+      this.feedModel.read();
+      this.render();
+    },  
+
+/** renders the feedview with a new collection
+  *
+  * If there is not a stored query then the search form is displayed
+  *    else the refresh form/button is displayed
+  * @instance
+  */
+    render : function () {
+      this.feed_view = new FeedItemsCollectionView({
+          collection: this.model,
+      });
+      var query = this.feedModel.get('query');
+      if(query === undefined) {
+        this.showSearch();
+      } else {
+        $(".querystring").text(query);        
+        this.showFeedItemCollection();
+      }
+    },
+    
+    /** Show the search form and hide the feed items with refresh and no results containers */
+    showSearch : function() {
+      $(".feeditemssearch").show();      
+      $(".nosearchresults").hide();     
+      $(".feeditemscollectioncontainer").hide();
+    },
+    
+    /** Show the feed items container and hide the search form and no results container */
+    showFeedItemCollection : function (query) {
+      $(".feeditemssearch").hide();     
+      $(".feeditemscollectioncontainer").show();
+      $(".nosearchresults").hide();       
+    },
+    
+    /** Show the search form and the no results container and hide the feed items conatiner */
+    showNoSearchResults : function (query) {
+      $(".feeditemssearch").show();      
+      $(".nosearchresults").show();           
+      $(".feeditemscollectioncontainer").hide();
+    },
+    
+    /** call the twitter search api using the proxy
+     * @param {string} query the search query 
+     * @param {function} callback
+     */
+    callQuery: function(query, callback) {
+      // format per twitter-proxy.php?url='+encodeURIComponent('statuses/user_timeline.json?screen_name=MikeRogers0&count=2')
+      // twitter search = https://api.twitter.com/1.1/search/tweets.json
+      var url = "twitter-proxy.php?url=";
+      // we encode the query to handle any special characters properly
+       url += encodeURIComponent("search/tweets.json?q="+query);
+        $.get(url, function(data) {
+          callback(data);
+        }, 
+        'json');     
+    },
+    
+    /** search for tweets using a query
+     * if it's a valid query and there's no results then show the no results items
+     * if it's a valid query and there's results then update the persisent search query and update the feed
+     */
+    search: function () {
+       var query = $("input.search").val();
+       if (!query) {
+         return;
+       }
+       
+       $(".querystring").text(query);
+       var that = this;
+       this.callQuery(query, function(data) {
+          if( data.statuses !== undefined && data.statuses.length > 0) {
+            that.feedModel.set({'query':query});
+            that.feedModel.save();
+            that.updateFeed(data );
+
+            // show the refresh and hide the search after results are displayed to prevent flicker
+            that.showFeedItemCollection(query);
+          } else {
+            that.showNoSearchResults(query);
+          }        
+       });
+   },
+     
+     /** refresh the stream
+      * uses the first model's id_str as the since_id in the query
+      */
+   refresh: function () {
+
+      var lastId = this.model.models[0].attributes.id_str
+      // encode the query to handle any special characters properly
+      var that = this;
+      this.callQuery(this.feedModel.get('query') + "&since_id="+lastId, function(data) { that.updateFeed(data); }, 'json');    
+    },
+
+    /** update the feed with server data, model and view */
+    updateFeed : function(feedItems){
+       // so lame, passing an array to unshift doesn't work
+       if(feedItems.statuses !== undefined ) {
+         for(var i = feedItems.statuses.length -1 ; i >= 0; i--) {
+           this.model.unshift(feedItems.statuses[i]);
+         }
+         this.model.save();
+         this.showFeedItemCollection();        
+      }
+    }
+  });
+
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Index</a></h2><h3>Modules</h3><ul><li><a href="_.html">App
+All the requires are here for easy cut 'n paste in other files</a></li><li><a href="module-FeedItemModel.html">FeedItemModel</a></li><li><a href="module-FeedItemsCollection.html">FeedItemsCollection</a></li><li><a href="module-FeedItemsCollectionView.html">FeedItemsCollectionView</a></li><li><a href="module-FeedItemView.html">FeedItemView</a></li><li><a href="module-FeedView.html">FeedView</a></li><li><a href="module-mobileRouter.html">mobileRouter</a></li><li><a href="module-SearchQueryModel.html">SearchQueryModel</a></li></ul><h3>Global</h3><ul><li><a href="global.html#define">define</a></li><li><a href="global.html#require">require</a></li><li><a href="global.html#requirejs">requirejs</a></li><li><a href="global.html#toUrl">toUrl</a></li></ul>
+</nav>
+
+<br clear="both">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0-dev</a> on Wed Sep 11 2013 14:54:05 GMT-0700 (PDT)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

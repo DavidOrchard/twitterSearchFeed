@@ -1,0 +1,54 @@
+<!--Copyright (C) 2013 David Orchard
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+-->
+<!DOCTYPE HTML>
+<html>
+<head>
+  <script data-main="js/mobile-main" src="js/lib/require.js"></script>
+  <meta charset="UTF-8">
+  <title>Twitter Search</title>
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/views/feeditemscollection.css">
+  <link rel="stylesheet" href="css/views/feeditem.css">
+
+  <!-- Mobile viewport optimized: h5bp.com/viewport -->
+  <meta name="viewport" content="user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=device-width">
+
+  <!-- Make standalone in iOS, better than the scrollTo hack -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  
+</head>
+<body>
+  <div id="search-feed" title="Twitter Search">
+    <div>
+      <h2>Persistent Twitter Search</h2>
+    </div>
+    <div>
+      <section class="feedcontainer">
+        <section class="feeditemssearch">
+          <form>
+            <p>Please enter your twitter search below.  The search will be saved for you so you can return any time.  You can refresh the results manually and there is an automatic refresh</p>
+            <label for="searchInput">Enter Search</label><input id="searchInput" class="search" placeholder="search" type="search" maxlength="1000" label="search input" required aria-required="true"/>
+            <span class="searchsubmit" type="button" title="Get Tweets" ></span>
+          </form>
+        </section>
+        <section class="feeditemscollectioncontainer">
+          <p>You can refresh the results manually and there is an automatic refresh.</p>
+          <span class="refreshsubmit" title="Refresh Search" label="Refresh Search"></span>Results for <strong class="querystring"></strong>
+            <!-- for testing purposes only --> <span class="resetsubmit" type="button" style="display:none"> reset</span>
+          <section class="feeditemscollection"></section>
+        </section>
+      </section>
+      <section class="nosearchresults">
+        <span class="header">No Tweet results for </span><span class="querystring"></span>
+      </section>
+    </section>
+  </div> 
+</div>   
+</body>
+</html>
