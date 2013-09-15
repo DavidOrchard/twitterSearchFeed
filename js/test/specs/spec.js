@@ -209,6 +209,11 @@ function($,
             this.collection.update(testData);
             expect(spy).toHaveBeenCalled();
           });
+          
+          it("should have no items after reset called", function () {
+            this.collection.reset();
+            expect(this.collection.length).toEqual(0);
+          });
         });
 
         }); // End of the Collection test suite

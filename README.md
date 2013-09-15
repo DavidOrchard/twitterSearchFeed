@@ -99,7 +99,7 @@ The Feed model and the FeedItems Collections are coupled to the localStorage.  I
 It looks like the 2 ways of clearing localstorage: 1) casper.evaluate of removing localStorage, and 2) adding a reset button that clears it; don't work well with casper js.  There is a manual way to remove the localStorage: 
 rm ~/Library/Application\ Support/Ofi\ Labs/PhantomJS/http_localhost_0.localstorage
 
-However, that means only some of the tests will run before they run into the problem of needing localStorage cleared.  You can set which tests to run in the FTest.js file.  There are 4 different configurations that run together.
+I resorted to resetting the models in addition to removing localStorage when a custom reset method is called, typically via a hidden reset button.  After the models are reset, the UI resets to the search state as there are just empty models then.  This workaround enables the casper ftests to run to completion.
 
 There could be more unit tests or ftests, such as images correctly displayed, exact correct formatting of the elements, etc.  It is important to only test the external behavior, not the internals.  This allows for refactoring and changes without needless test rewrites.  Also, the FTest.js file has some duplicate code because there are problems guaranteeing ordering of executing.
 

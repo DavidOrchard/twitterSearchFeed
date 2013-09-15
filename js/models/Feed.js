@@ -40,6 +40,7 @@ define([
     /** clear the local storage and clear the model */
     reset: function() {
       try {
+        this.clear();
         localStorage.removeItem("feedModel");
       } catch(e) {       
       }

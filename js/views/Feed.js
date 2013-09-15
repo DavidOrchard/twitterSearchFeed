@@ -86,8 +86,6 @@ define(function(require) {
       
       // the model is now good.
       this.model.save();
-      var that = this;
-      window.setInterval(function () {that.refresh();}, 30000);
     },
     
     /** Show the search form and the no results container and hide the feed items conatiner */
@@ -123,6 +121,8 @@ define(function(require) {
 
      reset : function () {
        this.model.reset();
+       this.feedItemsCollection.reset();
+       this.showSearch();
      }
    });
 });

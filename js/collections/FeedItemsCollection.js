@@ -17,6 +17,7 @@ define([
   var FeedItemsCollection = Backbone.Collection.extend({
     model: FeedItemModel,
     maxSize: 50,
+    autoRefreshInterval: 30000,
     
     /** save the collection to localStorage */
     save: function () {
@@ -33,6 +34,7 @@ define([
         if( localStorage.feedItemsCollection !== undefined ){
           feedItemsFromLocalStorage = JSON.parse(localStorage.feedItemsCollection);
           this.add(feedItemsFromLocalStorage);
+          this.setAutoRefresh();
         }
       } catch( e) {
         // if there's any problems parsing the stored stuff, at least get us back to a stable state
@@ -44,7 +46,9 @@ define([
     /** clear the localStorage and reset the model */
     reset: function() {
       try {
+        Backbone.Collection.prototype.reset.call(this);
         localStorage.removeItem("feedItemsCollection");
+        this.clearAutoRefresh();
       } catch (e) {        
       }
     },
@@ -65,6 +69,7 @@ define([
          if( this.length == 0 ) {
             if( statuses.length > 0 ) {
               this.trigger('successfulSearch');
+              this.setAutoRefresh();
             } else {
               this.trigger('unsuccessfulSearch');
             }
@@ -77,6 +82,17 @@ define([
          }
          this.save();
        }
+     },
+     
+     /** set the auto refresh, usually only on successful query */
+     setAutoRefresh: function() {
+       var that = this;
+       this.intervalId = window.setInterval(function () {that.refresh();}, this.autoRefreshInterval);
+     },
+     
+     /** clear the auto refresh, probably only happen on reset */
+     clearAutoRefresh: function() {
+       window.clearInterval(this.intervalId);
      },
      
      /** call the twitter search api using the proxy

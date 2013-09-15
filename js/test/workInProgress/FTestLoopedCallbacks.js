@@ -44,8 +44,12 @@ var ProxyNoURLSetMsg = "No URL set";
 var ProxyURLTooLongMsg = "URL too long";
 var ProxyURLNotAuthorisedMsg = "URL is not authorised";
 var NoTweetResultsText = "No Tweet results for";
-//var testsToRun = [4];
-var testsToRun = Array(1,2,3,4,5,6,7,8,9,10,11);
+var testsToRun = [4];
+//var testsToRun = Array(1,2, 7);
+//var testsToRun = Array(1,2,3,4 5,6,7,8,9,10,11);
+//var testsToRun = Array(1,4);
+//var testsToRun = Array(3, 4,5,6);
+//var testsToRun = Array(7,8,9,10,11);
 
 casper.test.begin("Twitter Search Feed tests", {
   setUp: function(test) {    
@@ -88,20 +92,37 @@ casper.test.begin("Twitter Search Feed tests", {
         });
       }
    
-      /** Test case: proxy with a long url and no url in the url */
-      if( testsToRun.indexOf(3) != -1 ){
-       casper.thenOpen(twitterSearchSite + "/twitter-proxy.php?q=0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234");
-       var testText11 = "Twitter Search Feed Test #3: No URL in too long a URL to proxy";
-       var fileName11 = testText11.replace(/\s+/g, '');
-       casper.waitForText(ProxyNoURLSetMsg, 
-       function success() {
-         test.assertTextExists(ProxyNoURLSetMsg, testText11);
-       }, 
-       function fail() {
-         test.assertTextExists(ProxyNoURLSetMsg, testText11);
-       });
-      } 
- 
+   /** Test case: big request with auto refresh does add */
+   casper.then( function () {
+     if( testsToRun.indexOf(3) != -1 ){
+       removeLocalStorage("test initializer");
+       casper.thenOpen(twitterSearchSite);
+       var testText3 = "Twitter Search Feed Test #3: big request auto refresh";
+       var fileName3 = testText3.replace(/\s+/g, '');
+       casper.then( function() {
+       that.enterTermAndClick(test, "a", testText3);
+       casper.waitUntilVisible(refreshSubmitSelector,
+         function success() {
+           var resultsLength = casper.evaluate(feedItemLength);
+           test.assertEquals(15, resultsLength, testText3 + " has 15 results");
+           casper.click(refreshSubmitSelector);
+         },
+         function fail() {
+           casper.capture(fileName3 + 'Fail.png');
+           test.assertExists(refreshSubmitSelector, testText3 + " missing " + refreshSubmitSelector);
+      });
+
+       var f = function success() {
+         var resultsLength = casper.evaluate(feedItemLength);
+         test.assert(resultsLength > 15, testText3 + " after auto refresh has " + resultsLength + " tweets which is > 15");
+       };
+
+       casper.wait(autorefreshinterval + 5000);
+       casper.waitForSelector(refreshSubmitSelector, f, f);
+     });
+    }
+  });
+  
   /* Test case: big request with manual refresh does add */
   if( testsToRun.indexOf(4) != -1 ){
     casper.then( function () {
@@ -122,11 +143,10 @@ casper.test.begin("Twitter Search Feed tests", {
                     test.assertVisible(refreshSubmitSelector, testText4 + " refresh displayed");
                     casper.wait(5000);
                     resultsLength = casper.evaluate(feedItemLength);
-                    test.assert(resultsLength > 0 , testText4 + " has " + resultsLength + " results");
+                    test.assert(resultsLength != null, testText4 + " has " + resultsLength + " results");
+                    test.assert(resultsLength > 0 , testText4 + " has >0 results");
                     casper.click(refreshSubmitSelector);
                     var f = function success() {
-                      // wait for rendering to finish
-                      casper.wait(1000);
                       var resultsLengthNow = casper.evaluate(feedItemLength);
                       test.assert(resultsLengthNow > resultsLength , testText4 +  " after manual refresh has " + resultsLengthNow + " results which is >" + resultsLength);
                     };
@@ -135,9 +155,9 @@ casper.test.begin("Twitter Search Feed tests", {
                     //casper.waitForSelectorTextChange('.feeditem:first .feeditemtext', f, f); doesn't work
                     // I *hate* timing based tests.  Determinism is good for the soul
 
-//                    casper.wait(5000);
-//                    casper.waitUntilVisible(refreshSubmitSelector, f, f);
-                      casper.waitFor(function() { var rl = casper.evaluate(feedItemLength); return rl > resultsLength}, f, f);
+                    casper.wait(5000);
+                    casper.waitUntilVisible(refreshSubmitSelector, f, f);
+
                   },
                   function fail() {
                     casper.capture(fileName4 + 'Fail.png');
@@ -192,7 +212,7 @@ casper.test.begin("Twitter Search Feed tests", {
          function success() {
            var resultsLength = casper.evaluate(feedItemLength);
            test.assert(resultsLength > 0, testText7 + " loop 1 reached has " + resultsLength + " tweets which > 0 results");
-           casper.wait(3000);
+           casper.wait(2000);
            casper.click(refreshSubmitSelector);
             // loop 2
            casper.wait(1000);
@@ -201,7 +221,7 @@ casper.test.begin("Twitter Search Feed tests", {
                var resultsLength2 = casper.evaluate(feedItemLength);
                casper.capture(fileName7 + 'Loop2.png');
                test.assert(resultsLength2 > resultsLength, testText7 + " loop 2 reached has " + resultsLength2 + " tweets which > " + resultsLength + " results");
-               casper.wait(3000);
+               casper.wait(2000);
                casper.click(refreshSubmitSelector);
                // loop 3
                casper.wait(2000);
@@ -210,7 +230,7 @@ casper.test.begin("Twitter Search Feed tests", {
                    casper.capture(fileName7 + 'Loop3.png');
                    var resultsLength3 = casper.evaluate(feedItemLength);
                    test.assert(resultsLength3 > resultsLength2, testText7 + " loop 3 reached has " + resultsLength3 + " tweets which > " + resultsLength2 + " results");
-                   casper.wait(3000);
+                   casper.wait(2000);
                    casper.click(refreshSubmitSelector);
                    // loop 4
                    casper.wait(2000);
@@ -219,7 +239,7 @@ casper.test.begin("Twitter Search Feed tests", {
                         casper.capture(fileName7 + 'Loop4.png');
                         var resultsLength4 = casper.evaluate(feedItemLength);
                         test.assert(resultsLength4 > resultsLength3, testText7 + " loop 4 reached has " + resultsLength4 + " tweets which > " + resultsLength3 + " results");
-                        casper.wait(3000);
+                        casper.wait(2000);
                         casper.click(refreshSubmitSelector);
                         casper.wait(2000);
                         casper.waitFor(function() { return feedItemLengthGreaterThan(resultsLength4);},
@@ -230,23 +250,23 @@ casper.test.begin("Twitter Search Feed tests", {
                          }, 
                         function fail() {
                           casper.capture(fileName7 + 'AfterLoopsFail.png');
-                          test.assertExists(refreshSubmitSelector, testText7 + " after loop 4 reached missing feedItemLengthGreaterThan(" + resultsLength4 + ")");
+                          test.assertExists(refreshSubmitSelector, testText7 + " after loop missing " + refreshSubmitSelector);
                         });
                       },
                       function fail() {
-                        test.assertExists(refreshSubmitSelector, testText7 + " after loop 4 reached missing feedItemLengthGreaterThan(" + resultsLength3 + ")");
+                        test.assertExists(refreshSubmitSelector, testText7 + " loop 4 reached missing " + refreshSubmitSelector);
                       });
                   },
                  function fail() {
-                   test.assertExists(refreshSubmitSelector, testText7 + " after loop 3 reached missing feedItemLengthGreaterThan(" + resultsLength2 + ")");
+                   test.assertExists(refreshSubmitSelector, testText7 + " reached missing " + refreshSubmitSelector);
                  });
              },
              function fail() {
-               test.assertExists(refreshSubmitSelector, testText7 + " after loop 2 reached missing feedItemLengthGreaterThan(" + resultsLength + ")");
+               test.assertExists(refreshSubmitSelector, testText7 + " reached missing " + refreshSubmitSelector);
              });
          },
          function fail() {
-           test.assertExists(refreshSubmitSelector, testText7 + " ater loop 1 reached missing feedItemLengthGreaterThan(14)");
+           test.assertExists(refreshSubmitSelector, testText7 + " reached missing " + refreshSubmitSelector);
          });
        });
     }
@@ -297,7 +317,7 @@ casper.test.begin("Twitter Search Feed tests", {
       function fail() {
         test.assertExists(searchSubmitSelector, testText9 + " missing " + searchSubmitSelector);
       });
-      f = function() { test.assertTextExists(NoTweetResultsText, testText9 + "No search results should be displayed");};
+      f = function() { test.assertTextExists(NoTweetResultsText, "No search results should be displayed");};
       casper.waitForText("No Tweet results for", f, f);
       f = function() { test.assertExists(searchSubmitSelector, testText9 + " search submit should be displayed after no results");};
       casper.waitForSelector(searchSubmitSelector,f, function(){});
@@ -338,36 +358,19 @@ casper.test.begin("Twitter Search Feed tests", {
       });
      });
   }
-   /** Test case: big request with auto refresh does add */
-   casper.then( function () {
-     if( testsToRun.indexOf(11) != -1 ){
-       removeLocalStorage("test initializer");
-       casper.thenOpen(twitterSearchSite);
-       var testText3 = "Twitter Search Feed Test #11: big request auto refresh";
-       var fileName3 = testText3.replace(/\s+/g, '');
-       casper.then( function() {
-       that.enterTermAndClick(test, "a", testText3);
-       casper.waitUntilVisible(refreshSubmitSelector,
-         function success() {
-           var resultsLength = casper.evaluate(feedItemLength);
-           test.assertEquals(15, resultsLength, testText3 + " has 15 results");
-           casper.click(refreshSubmitSelector);
-         },
-         function fail() {
-           casper.capture(fileName3 + 'Fail.png');
-           test.assertExists(refreshSubmitSelector, testText3 + " missing " + refreshSubmitSelector);
-      });
-
-       var f = function success() {
-         var resultsLength = casper.evaluate(feedItemLength);
-         test.assert(resultsLength > 15, testText3 + " after auto refresh has " + resultsLength + " tweets which is > 15");
-       };
-
-       casper.wait(autorefreshinterval + 5000);
-       casper.waitForSelector(refreshSubmitSelector, f, f);
-     });
-    }
-  });
+  /** Test case: proxy with a long url and no url in the url */
+  if( testsToRun.indexOf(11) != -1 ){
+   casper.thenOpen(twitterSearchSite + "/twitter-proxy.php?q=0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234");
+   var testText11 = "Twitter Search Feed Test #11: No URL in too long a URL to proxy";
+   var fileName11 = testText11.replace(/\s+/g, '');
+   casper.waitForText(ProxyNoURLSetMsg, 
+   function success() {
+     test.assertTextExists(ProxyNoURLSetMsg, testText11);
+   }, 
+   function fail() {
+     test.assertTextExists(ProxyNoURLSetMsg, testText11);
+   });
+  } 
    
   casper.run(function() {casper.test.renderResults(true); test.done();});
   },
