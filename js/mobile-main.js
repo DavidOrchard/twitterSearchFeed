@@ -10,8 +10,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 /** main entry point into the application */
 
 require.config({
-  baseUrl: 'js',
-  paths: {
+  shim: {
+		underscore: {
+			exports: '_'
+		},
+		backbone: {
+			deps: [
+				'underscore',
+				'jquery'
+			],
+			exports: 'Backbone'
+		}
+	},
+	paths: {
     jquery: 'lib/jquery',
     underscore: 'lib/underscore',
     backbone: 'lib/backbone',
@@ -19,13 +30,20 @@ require.config({
   }
 });
 
-define(function(require) {
-  var $ = require('jquery'),
-  Backbone = require('backbone'),
-  App = require('app'),
-  MobileRouter = require('routers/mobileRouter');
+define([
+	'jquery',
+	'underscore',
+	'backbone',
+	'models/Feed',
+	'routers/MobileRouter',
+	'views/Feed',
+], function( $, _, Backbone, FeedModel, MobileRouter, FeedView) {
 
-  App.initialize();     
-  this.router = new MobileRouter();
-  
+  new MobileRouter();
+  // Tell Backbone to start watching for hashchange events
+  Backbone.history.start();
+
+  var feedModel = new FeedModel();
+  feedModel.read();
+  new FeedView({model:feedModel});  
 });

@@ -11,13 +11,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 define([
   'underscore',
   'backbone',
-  'models/FeedItem'
-], function(_, Backbone, FeedItemModel){
+  'models/FeedItem',
+  'common'
+], function(_, Backbone, FeedItemModel, common){
   'use strict';
   var FeedItemsCollection = Backbone.Collection.extend({
     model: FeedItemModel,
-    maxSize: 50,
-    autoRefreshInterval: 30000,
     
     /** save the collection to localStorage */
     save: function () {
@@ -76,7 +75,7 @@ define([
          }
          for(var i = statuses.length -1 ; i >= 0; i--) {
             this.unshift(statuses[i]);
-            while(this.length > this.maxSize ) {
+            while(this.length > common.maxFeedItemsCollectionSize ) {
               this.pop();
             }
          }
@@ -87,7 +86,7 @@ define([
      /** set the auto refresh, usually only on successful query */
      setAutoRefresh: function() {
        var that = this;
-       this.intervalId = window.setInterval(function () {that.refresh();}, this.autoRefreshInterval);
+       this.intervalId = window.setInterval(function () {that.refresh();}, common.autoRefreshInterval);
      },
      
      /** clear the auto refresh, probably only happen on reset */

@@ -8,29 +8,24 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 */
 
 /** @module mobileRouter */
-define(function(require) {
-  var Backbone = require('backbone');
-  require("jquery");
+define([
+	'jquery',
+	'underscore',
+	'backbone',
+	'routers/MobileRouter'
+], function( $, _, Backbone, TwitterSearchRouter) {
 
    var TwitterSearchRouter = Backbone.Router.extend( {
 
-    initialize: function() {
-      // Tell Backbone to start watching for hashchange events
-      Backbone.history.start();
-    },
-
-    routes: {
+     routes: {
       // When there is no hash on the url, the home method is called
       "": "home",
       "home": "home",
-    },
+      },
 
-    home: function() {
-    }
-
+      home: function() {
+      }
   });
 
-  // Returns the Router class
   return TwitterSearchRouter;
-
 }); 

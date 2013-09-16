@@ -12,6 +12,9 @@ module.exports = function(grunt) {
       },
       'removePhantomJSLocalStorage' : {
         command: 'rm ~/Library/Application\ Support/Ofi\ Labs/PhantomJS/http_localhost_0.localstorage'
+      },
+      'minify' : {
+        command: 'node r.js -o baseUrl=./js name=mobile-main paths.jquery=lib/jquery paths.backbone=lib/backbone paths.underscore=lib/underscore  dir=dist removeCombined=true'
       }
     },
     jshint: {
@@ -45,15 +48,6 @@ module.exports = function(grunt) {
         }      
       }
     },
-    requirejs: {
-      production: {
-        options: {
-          baseUrl: "js",
-          mainConfigFile: "js/mobile-main.js",
-          out: "build/twitterfeed-require-min.js"
-        }
-      }
-    },
     pkg: grunt.file.readJSON('package.json'),
     uglify: {
       options: {
@@ -84,5 +78,6 @@ module.exports = function(grunt) {
   grunt.registerTask('default', ['test']);
   grunt.registerTask('heroku', ['shell:heroku']);
   grunt.registerTask('github', ['shell:github']);
+  grunt.registerTask('minify', ['shell:minify']);
   grunt.registerTask('ftest', ['shell:removePhantomJSLocalStorage', 'casperjs']);
 };

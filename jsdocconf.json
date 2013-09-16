@@ -1,4 +1,4 @@
 {
   "source": {
-    "excludePattern": "(^|\\/|\\\\)lib"  }
+    "excludePattern": "(^|\\/|\\\\)lib|dist"  }
 }

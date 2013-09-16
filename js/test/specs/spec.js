@@ -13,6 +13,7 @@ require.config( {
     jquery: 'lib/jquery',
     underscore: 'lib/underscore',
     backbone: 'lib/backbone',
+    newsfeedstatic: 'test/newsfeedstatic',
 
     // Plugins
 
@@ -20,15 +21,25 @@ require.config( {
     text: 'text'
   },
   shim: {
-        // Jasmine-jQuery plugin
-        "jasminejquery": {
-            deps:['jquery'],
-            exports:'jquery'
-         },
+		underscore: {
+			exports: '_'
+		},
+		backbone: {
+			deps: [
+				'underscore',
+				'jquery'
+			],
+			exports: 'Backbone'
+		},
+    // Jasmine-jQuery plugin
+    "jasminejquery": {
+        deps:['jquery'],
+        exports:'jquery'
+     },
 
-         newsfeedstatic:{
-           exports:'news_feed_data'
-         }
+     newsfeedstatic:{
+       exports:'news_feed_data'
+     }
     }
 });
 
@@ -43,6 +54,7 @@ define(['jquery',
 'collections/FeedItemsCollection',
 "routers/mobileRouter",
 'newsfeedstatic',
+'common',
 "jasminejquery"],
 function($,
   Backbone,
@@ -53,7 +65,8 @@ function($,
   FeedModel,
   FeedItemsCollection,
   MobileRouter,
-  news_feed_data )
+  news_feed_data,
+  common )
   {
   var testData1 = {statuses : [ {"id_str" : "377465033191485441",
                                  "created_at" : "Tue Sep 10 16:14:11 +0000 2013",
@@ -83,6 +96,8 @@ function($,
 
               describe("FeedItemsCollectionView", function() {
                 beforeEach(function() {
+                  this.common = common;
+                  this.common.maxFeedItemsCollectionSize = 15;
                   this.feedItemsCollection = new FeedItemsCollection();
                   this.feedItemsCollection.update(news_feed_data);
                    this.feedItemsCollectionView = new FeedItemsCollectionView({
@@ -104,8 +119,7 @@ function($,
                 });
 
                 it("should contain the correct number of views after 1 added", function() {
-                  this.feedItemsCollection.maxSize = 15;
-                  this.feedItemsCollection.update(testData1);
+                   this.feedItemsCollection.update(testData1);
                   expect(this.feedItemsCollectionView.$el.children().length).toEqual(15);
                 });
               });
@@ -229,6 +243,8 @@ function($,
 
                 // Instantiates a new Router instance
                 this.router = new MobileRouter();
+                
+                Backbone.history.start();
 
                 // Creates a Jasmine spy
                 this.routeSpy = jasmine.createSpy("home");

@@ -7,33 +7,16 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-/** @module App
+/** @module common
  *
- * All the requires are here for easy cut 'n paste in other files 
+ * All the globals across the app
  */
-define(function(require) {
-  var $ = require('jquery'),
-  _ = require('underscore'),
-  Backbone = require('backbone'),
-  FeedItemModel = require('models/FeedItem'),
-  FeedModel = require('models/Feed'),
-  FeedItemsCollection = require('collections/FeedItemsCollection'),
-  MobileRouter = require('routers/mobileRouter'),
-  FeedView = require('views/Feed'),
-  FeedItemView = require('views/FeedItem'),
-  FeedItemsCollectionView = require('views/FeedItemsCollection');
-
-  /** Load the stored search query
-  *  Initialize the FeedView, setting the model to any stored query results if there is a search query
-  *
-  */          
-  var initialize = function(){
-    var feedModel = new FeedModel();
-    feedModel.read();
-    feedView = new FeedView({model:feedModel});
-  };
-
-  return {
-    initialize: initialize
-  };
+ define([], function() {
+	return {
+	  /* Debatable whether the size of a structure should be in the structure or outside.  I tend to like such globals outside so they
+	   * are very obvious.  It's a wash wrt testing.
+	   */
+	  maxFeedItemsCollectionSize: 50,
+    autoRefreshInterval: 30000    
+	};
 });

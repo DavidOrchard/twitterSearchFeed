@@ -27,6 +27,8 @@ define(function(require){
   
     /** subscriber for removed items
      * @param {object} item the item removed
+     *
+     * There shouldn't be a chance that the last item in the collection is not the last item in the view
      */
    remove: function(item) {
      this.$el.children().last().remove();

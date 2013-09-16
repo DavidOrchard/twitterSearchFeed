@@ -105,8 +105,12 @@ There could be more unit tests or ftests, such as images correctly displayed, ex
 
 TODO: 
 
-* automated jshint in grunt
-* Obfuscation, minification in grunt
+* Sep 15 changes broke jsdoc
+* restart aborted automated jshint in grunt
+* restart aborted automated jasmine in grunt
+* restart aborted backbone localStorage
+* Clean up FTest.js dup code
+* fix jasmine test fixtures needing to be in SpecRunner.html
 
 #Installation
 
@@ -115,6 +119,7 @@ TODO:
 * npm install
 * npm install grunt-shell
 * npm install grunt-contrib-jasmine
+* npm install requirejs
 * npm install -g git://github.com/jsdoc3/jsdoc.git
 
 ## Valiant attempts
