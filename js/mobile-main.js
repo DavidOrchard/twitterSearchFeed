@@ -20,12 +20,17 @@ require.config({
 				'jquery'
 			],
 			exports: 'Backbone'
+		},
+		backboneLocalStorage: {
+			deps: ['backbone'],
+			exports: 'Store'
 		}
 	},
 	paths: {
     jquery: 'lib/jquery',
-    underscore: 'lib/underscore',
+    underscore: 'lib/underscore', 
     backbone: 'lib/backbone',
+		backboneLocalStorage: 'lib/backbone.localStorage',
     text: 'text'
   }
 });
@@ -35,7 +40,7 @@ define([
 	'underscore',
 	'backbone',
 	'models/Feed',
-	'routers/MobileRouter',
+	'routers/mobileRouter',
 	'views/Feed',
 ], function( $, _, Backbone, FeedModel, MobileRouter, FeedView) {
 
@@ -44,6 +49,10 @@ define([
   Backbone.history.start();
 
   var feedModel = new FeedModel();
-  feedModel.read();
+  feedModel.fetch();
+  // hackery as backbone.localStorage seems to be designed for collections so it stores things as an array
+  if( feedModel.attributes && feedModel.attributes[0] && feedModel.attributes[0].query) {
+    feedModel.set('query', feedModel.attributes[0].query);
+  }
   new FeedView({model:feedModel});  
 });

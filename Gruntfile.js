@@ -14,7 +14,7 @@ module.exports = function(grunt) {
         command: 'rm ~/Library/Application\ Support/Ofi\ Labs/PhantomJS/http_localhost_0.localstorage'
       },
       'minify' : {
-        command: 'node r.js -o baseUrl=./js name=mobile-main paths.jquery=lib/jquery paths.backbone=lib/backbone paths.underscore=lib/underscore  dir=dist removeCombined=true'
+        command: 'node r.js -o baseUrl=./js name=mobile-main paths.jquery=lib/jquery paths.backbone=lib/backbone paths.underscore=lib/underscore  paths.backboneLocalStorage=lib/backbone.localStorage dir=dist removeCombined=true'
       }
     },
     jshint: {

@@ -39,16 +39,21 @@ define(function(require) {
    */
     initialize: function(){
       _.bindAll(this, "search");
-       this.feedItemsCollection = new FeedItemsCollection();
+      this.feedItemsCollection = new FeedItemsCollection();
         
       console.log("An object of FeedView was created");
       this.model.on('reset', _.bind(this.render, this));
       this.feedItemsCollection.on('successfulSearch', _.bind(this.showFeedItemCollection, this));
       this.feedItemsCollection.on('unsuccessfulSearch', _.bind(this.showNoSearchResults, this));
 
+      // The stored item has already been parsed and we can't double parse.
       if(this.model.get('query') !== undefined) {
-          this.feedItemsCollection.read();
+          this.feedItemsCollection.fetch({parse:false});
+          this.feedItemsCollection.query = this.model.get('query');
       }
+      new FeedItemsCollectionView({
+           collection: this.feedItemsCollection,
+       });
       this.render();
     },  
 
@@ -59,9 +64,6 @@ define(function(require) {
   * @instance
   */
     render : function () {
-      this.feed_view = new FeedItemsCollectionView({
-          collection: this.feedItemsCollection,
-      });
       var query = this.model.get('query');
       if(query === undefined) {
         this.showSearch();
@@ -117,12 +119,12 @@ define(function(require) {
       this.feedItemsCollection.refresh(this.model.get('query'));
      },
      
-     /** reset the model */
-
+     /** reset the app including all models and collections */
      reset : function () {
        this.model.reset();
        this.feedItemsCollection.reset();
        this.showSearch();
+       localStorage.clear();
      }
    });
 });

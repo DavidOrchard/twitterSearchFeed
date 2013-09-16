@@ -47,7 +47,7 @@ define(function(require){
       this.$el.html("");
       _.each(this.collection.models, function (item) {
            var feedItemView = new FeedItemView({ model: item });
-           this.$el.append(feedItemView.render().el);
+           this.$el.prepend(feedItemView.render().el);
        }, this);
 
         return this;

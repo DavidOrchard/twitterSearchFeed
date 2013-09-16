@@ -1,4 +1,4 @@
-var news_feed_data = {
+var testData15 = {
 	"statuses" : [
 			{
 				"metadata" : {

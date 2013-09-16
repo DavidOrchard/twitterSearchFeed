@@ -13,6 +13,7 @@ require.config( {
     jquery: 'lib/jquery',
     underscore: 'lib/underscore',
     backbone: 'lib/backbone',
+		backboneLocalStorage: 'lib/backbone.localStorage',
     newsfeedstatic: 'test/newsfeedstatic',
 
     // Plugins
@@ -31,6 +32,10 @@ require.config( {
 			],
 			exports: 'Backbone'
 		},
+		backboneLocalStorage: {
+			deps: ['backbone'],
+			exports: 'Store'
+		},
     // Jasmine-jQuery plugin
     "jasminejquery": {
         deps:['jquery'],
@@ -38,7 +43,7 @@ require.config( {
      },
 
      newsfeedstatic:{
-       exports:'news_feed_data'
+       exports:'testData15'
      }
     }
 });
@@ -65,7 +70,7 @@ function($,
   FeedModel,
   FeedItemsCollection,
   MobileRouter,
-  news_feed_data,
+  testData15,
   common )
   {
   var testData1 = {statuses : [ {"id_str" : "377465033191485441",
@@ -79,7 +84,7 @@ function($,
                               ]
                   };
 
-  var testData = {statuses : []};
+  var testData0 = {statuses : []};
 
         // Test suite that includes all of the Jasmine unit tests
         describe("Twitter Search", function() {
@@ -98,8 +103,12 @@ function($,
                 beforeEach(function() {
                   this.common = common;
                   this.common.maxFeedItemsCollectionSize = 15;
+                  var ajaxMock = spyOn($, 'ajax').andCallFake(function (options) {
+                          options.success(testData15);
+                      });  
+                  
                   this.feedItemsCollection = new FeedItemsCollection();
-                  this.feedItemsCollection.update(news_feed_data);
+                  this.feedItemsCollection.fetchRemote();
                    this.feedItemsCollectionView = new FeedItemsCollectionView({
                     collection: this.feedItemsCollection,
                   });
@@ -119,7 +128,8 @@ function($,
                 });
 
                 it("should contain the correct number of views after 1 added", function() {
-                   this.feedItemsCollection.update(testData1);
+                  $.ajax.andCallFake(function (options) { options.success(testData1);});  
+                  this.feedItemsCollection.refresh();
                   expect(this.feedItemsCollectionView.$el.children().length).toEqual(15);
                 });
               });
@@ -173,7 +183,7 @@ function($,
 
 /** The Spy isn't getting called, not sure why.  The showNoSearchResults is actually being called.  Setting a breakpoint shows the spy in place.
                it('No item in FeedItemsCollection after search should call showNoSearchResults', function () {
-                  this.feedView.feedItemsCollection.update(testData);
+                  this.feedView.feedItemsCollection.update(testData0);
                   expect(this.feedView.showNoSearchResults).toHaveBeenCalled();
                 });
 
@@ -196,31 +206,48 @@ function($,
           beforeEach(function() {
             // Instantiates a new Collection instance
             this.collection = new FeedItemsCollection();
+            var ajaxMock = spyOn($, 'ajax').andCallFake(function (options) {
+                  options.success(testData15);
+            });  
           });
 
           it("should contain the correct number of models", function() {
-            this.collection.update(news_feed_data);
+            this.collection.fetchRemote();
             expect(this.collection.length).toEqual(15);
           });
 
           it("should contain the correct number of models after 1 added", function() {
-            this.collection.maxSize = 15;
-            this.collection.update(news_feed_data);
-            this.collection.update(testData1);
+            this.common = common;
+            this.common.maxFeedItemsCollectionSize = 15;
+            this.collection.fetchRemote();
+            $.ajax.andCallFake(function (options) { options.success(testData1);});  
+            this.collection.refresh();
             expect(this.collection.length).toEqual(15);
           });
 
           it("should fire successfulSearch event after update with no items previously", function () {
             var spy = jasmine.createSpy('');
             this.collection.bind('successfulSearch', spy);
-            this.collection.update(testData1);
+            $.ajax.andCallFake(function (options) { options.success(testData1);});  
+            this.collection.refresh();
             expect(spy).toHaveBeenCalled();
           });
+          it("should generate a URL request with the query and the newest id_str", function () {
+             this.collection.fetchRemote();
+             var spy = jasmine.createSpy('');
+             this.collection.bind('successfulSearch', spy);
+             this.collection.query="test5";
+             $.ajax.andCallFake(function (options) { options.success(testData1);});  
+             this.collection.refresh();
+             expect($.ajax.mostRecentCall.args[0]["url"]).toContain("q%3Dtest5");
+             expect($.ajax.mostRecentCall.args[0]["url"]).toContain("since_id%3D377465033191485441");
+           });
 
           it("should fire unsuccessfulSearch event after update with no items previously", function () {
             var spy = jasmine.createSpy('');
             this.collection.bind('unsuccessfulSearch', spy);
-            this.collection.update(testData);
+            $.ajax.andCallFake(function (options) { options.success(testData0);});  
+            this.collection.refresh();
             expect(spy).toHaveBeenCalled();
           });
           

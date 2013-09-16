@@ -10,38 +10,19 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 /** @module FeedModel */
 define([
   'underscore',
-  'backbone'
-], function(_, Backbone){
+  'backbone',
+  'backboneLocalStorage'
+  
+], function(_, Backbone, Store){
   var FeedModel = Backbone.Model.extend({
     
-    /** save the model to localStorage */
-    save: function () {
-      try {
-        localStorage.feedModel = JSON.stringify(this.toJSON());
-      } catch (e) {        
-      }
-    },
-
-    /** read the model from localStorage */
-    read: function() {
-      var feedModelFromLocalStorage = null;
-      try {
-        if( localStorage.feedModel !== undefined ){
-          feedModelFromLocalStorage = JSON.parse(localStorage.feedModel);
-          this.set(feedModelFromLocalStorage);
-        }
-      } catch( e) {
-        // if there's any problems parsing the stored stuff, at least get us back to a stable state
-        this.reset();
-      }
-      return(feedModelFromLocalStorage);
-    },
+    localStorage: new Store("feed"),
 
     /** clear the local storage and clear the model */
     reset: function() {
       try {
         this.clear();
-        localStorage.removeItem("feedModel");
+        this.save();
       } catch(e) {       
       }
     }

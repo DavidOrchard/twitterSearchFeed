@@ -4,8 +4,9 @@ mobile-main.js
 lib/jquery.js
 lib/underscore.js
 lib/backbone.js
+lib/backbone.localStorage.js
 models/Feed.js
-routers/MobileRouter.js
+routers/mobileRouter.js
 text.js
 text!templates/FeedItem.html
 views/FeedItem.js

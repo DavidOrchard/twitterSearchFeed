@@ -11,9 +11,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 define([
 	'jquery',
 	'underscore',
-	'backbone',
-	'routers/MobileRouter'
-], function( $, _, Backbone, TwitterSearchRouter) {
+	'backbone'
+], function( $, _, Backbone) {
 
    var TwitterSearchRouter = Backbone.Router.extend( {
 

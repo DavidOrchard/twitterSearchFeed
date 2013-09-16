@@ -13,6 +13,7 @@ define([
   'backbone'
 ], function(_, Backbone){
   var FeedItemModel = Backbone.Model.extend({
+    
   });
   
   return FeedItemModel;

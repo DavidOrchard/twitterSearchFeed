@@ -54,7 +54,7 @@ There is explicitly no "fancy" UI, such as:
  * reasonable styling, shading, corners...
  * a button to cancel the persisted search
  
-## Application Architecture
+## Application Architecture and design
 
 The application is primarily javascript using Backbone and RequireJS.  It uses a twitter proxy due to browser same origin policy. 
 
@@ -69,8 +69,9 @@ It is deployed on heroku at http://twittersearchfeed.herokuapp.com/
 
 Grunt automates the running of jsdoc, casperjs, and deployment to git. 
 
-## Application design
-There is a backbone model for a feed item and a feed, a collection of feed items.  There are views for a feed, a feed items collection and a feed item.  With approval, the statement "The application uses one Backbone view, model, and collection" is interpreted as one or more views, one or more models, and one or more collections.  Moving the feed, feedItem, and feedItemsCollection into one view doesn't seem natural.
+There is a backbone model for a feed item and a feed, a collection of feed items.  There are views for a feed, a feed items collection and a feed item.  With approval, the statement "The application uses one Backbone view, model, and collection" is interpreted as one or more views, one or more models, and one or more collections.  Moving the feed, feedItem, and feedItemsCollection into one view doesn't seem natural.   
+
+As Sep 16th, the FeedItemsCollection uses Backbones built in URL handling with parsing.  backbone.localStorage is used to persist the Feed model and the feedItemsCollection.  There is conflict between the fetch for localStorage and the fetch for the twitter search.  There is a fetchRemote function to disambiguate.  There can be duplicate sync events issued after the local or remote stores have been fetched.  It would be good for backbone to have a way for the store provider to indicate which store was synced. 
 
 The UI is performant on refresh as any new tweets are inserted at the top and the existing tweets are not rendered.  There is a maximum number of tweets that are stored to prevent out of memory errors and sluggishness.  Extra models are removed and the DOM nodes are removed.  I believe this means they really are removed and do not become zombies, but I'm not 100% positive.  The feeditems are fairly minimal in their markup.  Each element is required for a css selector, and no more.
 
@@ -78,15 +79,9 @@ There is currently no mechanism to rate limit a users requests including auto-re
 
 The search and refresh icons are from Hootsuite's desktop app.  They should be a bit larger.
 
-If localStorage is not available, the app still functions but without persistence. It wasn't worth making a custom modernizr build to just check for localStorage.  The code simply does try catch blocks around reading and writing to localStorage.
+If localStorage is not available, the app still functions but without persistence. It wasn't worth making a custom modernizr build to just check for localStorage.  
 
-Note: to restart and kill the previous search, enter the javascript console and type localStorage.removeItem('searchQuery'). Alternatively, localStorage can be disabled using incognito mode.
-
-Note: The app does not uses the backbone native url, fetch and parse routines by design.  Backbone after-parse gives no event when the fetched items have been added to the model so there is no way of knowing when to save the model to localStorage.  Also, this gives the ability to move items off the bottom one at a time as others are being added, rather than a big jump of removing a bunch of items before backbone after-parse runs.  The github branch nativeCollectionStorageService is an implementation.
-
-Some design element I didn't get to
-* make proper globals out of things like the urls, number of items to keep
-* combine the 2 accessors to localStorage into 1
+Note: to restart and kill the previous search, enter the javascript console and type localStorage.clear(). Alternatively, localStorage can be disabled using incognito mode.
 
 # Testing
 
@@ -123,7 +118,6 @@ TODO:
 * npm install -g git://github.com/jsdoc3/jsdoc.git
 
 ## Valiant attempts
-I made a valiant multi-hour attempt to use Backbone.localStorage (https://github.com/jeromegn/Backbone.localStorage) but the model/collections just weren't getting stored/read properly.  It looks like the collections models are all being stuffed inside the first model's attributes when stored.  The todo example only shows saving a model, not sync a collection.  I also tried saving each model as I unshifted it onto the collection, to no avail.  
 
 Couldn't split casperjs tests into multiple files per https://gist.github.com/n1k0/3813361.  The waitFor doesn't wait in file like:
   var x = require('casper').selectXPath;

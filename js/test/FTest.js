@@ -44,7 +44,7 @@ var ProxyNoURLSetMsg = "No URL set";
 var ProxyURLTooLongMsg = "URL too long";
 var ProxyURLNotAuthorisedMsg = "URL is not authorised";
 var NoTweetResultsText = "No Tweet results for";
-//var testsToRun = [4];
+//var testsToRun = [7];
 var testsToRun = Array(1,2,3,4,5,6,7,8,9,10,11);
 
 casper.test.begin("Twitter Search Feed tests", {
@@ -222,7 +222,7 @@ casper.test.begin("Twitter Search Feed tests", {
                         casper.wait(3000);
                         casper.click(refreshSubmitSelector);
                         casper.wait(2000);
-                        casper.waitFor(function() { return feedItemLengthGreaterThan(resultsLength4);},
+                        casper.waitFor(function() { return(feedItemLengthGreaterThan(resultsLength4) || resultsLength4 == maxItems);},
                         function success() {
                           var resultsLength5 = casper.evaluate(feedItemLength);
                           casper.capture(fileName7 + 'AfterLoopsPass.png');
@@ -230,7 +230,7 @@ casper.test.begin("Twitter Search Feed tests", {
                          }, 
                         function fail() {
                           casper.capture(fileName7 + 'AfterLoopsFail.png');
-                          test.assertExists(refreshSubmitSelector, testText7 + " after loop 4 reached missing feedItemLengthGreaterThan(" + resultsLength4 + ")");
+                          test.assertExists(refreshSubmitSelector, testText7 + " after all loops reached has feedItemLengthGreaterThan(" + resultsLength4 + ")");
                         });
                       },
                       function fail() {

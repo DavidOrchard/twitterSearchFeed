@@ -11,11 +11,12 @@
     fileExclusionRegExp: /^(r|build)\.js$/,
     optimizeCss: 'standard',
     removeCombined: true,
-    keepBuildDir:false,
+//    keepBuildDir:false,
     paths: {
         jquery: 'lib/jquery',
         underscore: 'lib/underscore',
         backbone: 'lib/backbone/backbone',
+        backboneLocalStorage: 'lib/backbone/backbone.localStorage',
         text: 'lib/require/text'
     },
     shim: {
@@ -28,7 +29,11 @@
                 'jquery'
             ],
             exports: 'Backbone'
-        }
+          },
+          backboneLocalStorage: {
+              deps: ['backbone'],
+              exports: 'Store'
+          }
     }
     
 })
