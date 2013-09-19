@@ -7,14 +7,27 @@ module.exports = function(grunt) {
       'github': {
         command: 'git push -f github master;'
       },
-      'jsdoc' : {
-        command: 'jsdoc js -r -c jsdocconf.json -d doc'
-      },
       'removePhantomJSLocalStorage' : {
         command: 'rm ~/Library/Application\ Support/Ofi\ Labs/PhantomJS/http_localhost_0.localstorage'
       },
       'minify' : {
         command: 'node r.js -o baseUrl=./js name=mobile-main paths.jquery=lib/jquery paths.backbone=lib/backbone paths.underscore=lib/underscore  paths.backboneLocalStorage=lib/backbone.localStorage dir=dist removeCombined=true'
+      }
+    },
+    jsdoc : {
+      dist : {
+        src: [
+        'README.md',
+        'js/*.js',
+        'js/collections/**/*.js',
+        'js/models/**/*.js',
+        'js/routers/**/*.js',
+        'js/templates/**/*.js',
+        'js/views/**/*.js'
+        ], 
+        options: {
+          destination: 'doc',
+        }
       }
     },
     jshint: {
@@ -26,8 +39,13 @@ module.exports = function(grunt) {
       'js/routers/**/*.js',
       'js/templates/**/*.js',
       'js/test/**/*.js',
-      'js/views/**/*.js',
+      'js/views/**/*.js'
       ],
+      options: {
+        ignores: ['js/r.js', 'js/test/workInProgress/*','js/text.js'],
+        '-W044': true, // extra escaping in command-line is needed
+        '-W103': true, // proto is needed to remove localStorage complely from a model or collection
+      }
     },
     casperjs: {
       options: {
@@ -38,7 +56,7 @@ module.exports = function(grunt) {
       files: ['js/test/FTest.js']
     },
     jasmine : {
-      src : ['js/**/*.js', '!js/lib/**/*.js', '!js/test/FTest.js', '!js/test/workInProgress/*'],
+      src : ['js/**/*.js', '!js/r.js', '!js/lib/**/*.js', '!js/test/**/*.js'],
       options : {
         specs : 'js/test/specs/spec.js',
         template: require('grunt-template-jasmine-requirejs'),
@@ -69,15 +87,15 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-shell');
+  grunt.loadNpmTasks('grunt-jsdoc');
 
-  //  grunt.registerTask('test', ['jshint', 'jasmine']);
-  grunt.registerTask('test', ['jasmine']);
-  grunt.registerTask('jshint', ['jshint']);
-  grunt.registerTask('jsdoc', ['shell:jsdoc']);
+  grunt.registerTask('unittest', ['jasmine']);
 
   grunt.registerTask('default', ['test']);
   grunt.registerTask('heroku', ['shell:heroku']);
   grunt.registerTask('github', ['shell:github']);
   grunt.registerTask('minify', ['shell:minify']);
   grunt.registerTask('ftest', ['shell:removePhantomJSLocalStorage', 'casperjs']);
+  //  grunt.registerTask('test', ['jshint', 'jasmine']);
+  grunt.registerTask('test', ['jshint', 'unittest', 'ftest']);
 };

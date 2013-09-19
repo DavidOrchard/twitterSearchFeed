@@ -10,7 +10,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 <html>
 <head>
 <script data-main="dist/mobile-main" src="dist/lib/require.js"></script>
-<!--<script data-main="js/mobile-main" src="js/lib/require.js"></script>-->
+<!--<script data-main="js/mobile-main" src="js/lib/require.js"></script> -->
 
   <meta charset="UTF-8">
   <title>Twitter Search</title>
@@ -38,18 +38,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
             <label for="searchInput">Enter Search</label><input id="searchInput" class="search" placeholder="search" type="search" maxlength="1000" label="search input" required aria-required="true"/>
             <span class="searchsubmit" type="button" title="Get Tweets" ></span>
           </form>
-        </section>
+        </section><!-- feeditemsearch -->
         <section class="feeditemscollectioncontainer">
           <p>You can refresh the results manually and there is an automatic refresh.</p>
           <span class="refreshsubmit" title="Refresh Search" label="Refresh Search"></span>Results for <strong class="querystring"></strong>
-            <!-- for testing purposes only --> <span class="resetsubmit" type="button" style="display:none"> reset</span>
+          <!-- for testing purposes only --> <span class="resetsubmit" type="button" style="display:none"> reset</span>
           <section class="feeditemscollection"></section>
         </section>
+        <section class="errormessage">
+          <span class="noSearchResults"><span class="header">No Tweet results for </span><span class="querystring"></span></span>
+          <span class="otherError"><span class="header"></span></span>
+        </section>
       </section>
-      <section class="nosearchresults">
-        <span class="header">No Tweet results for </span><span class="querystring"></span>
-      </section>
-    </section>
   </div> 
 </div>   
 </body>

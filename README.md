@@ -67,7 +67,7 @@ whitelist.
 
 It is deployed on heroku at http://twittersearchfeed.herokuapp.com/
 
-Grunt automates the running of jsdoc, casperjs, and deployment to git. 
+Grunt automates the running of jsdoc, jshint, jasmine unit tests, casperjs functional tests, and deployment to git.  grunt test will run jshint, jasmine unit tests and casperjs ftests.
 
 There is a backbone model for a feed item and a feed, a collection of feed items.  There are views for a feed, a feed items collection and a feed item.  With approval, the statement "The application uses one Backbone view, model, and collection" is interpreted as one or more views, one or more models, and one or more collections.  Moving the feed, feedItem, and feedItemsCollection into one view doesn't seem natural.   
 
@@ -81,17 +81,25 @@ The search and refresh icons are from Hootsuite's desktop app.  They should be a
 
 If localStorage is not available, the app still functions but without persistence. It wasn't worth making a custom modernizr build to just check for localStorage.  
 
-Note: to restart and kill the previous search, enter the javascript console and type localStorage.clear(). Alternatively, localStorage can be disabled using incognito mode.
+To restart and kill the previous search:
+desktop: enter the javascript console and type localStorage.clear(). 
+mobile: terminate the browser window in safari or chrome; delete the localStorage for the app (on iOS, this is settings -> safari -> advanced -> Website Data -> Edit -> - next to site you're using, tap delete.
+
+Alternatively, localStorage can be disabled using incognito mode.
 
 # Testing
 
-Casperjs tests can be run with casperjs test js/test/FTest.js or grunt casperjs
+The files pass jshint, with 2 warnings excluded.  grunt jshint runs the jshint tests.
 
-jasmine tests can be run with SpecRunner.html, such as http://twittersearchfeed.herokuapp.com/SpecRunner.html.
+Casperjs tests can be run with casperjs test js/test/FTest.js or grunt casperjs or grunt ftest
 
-The Feed model and the FeedItems Collections are coupled to the localStorage.  It would be good to decouple them for unit testing.  There's a lot more unit testing that could be done, such as checking for max lengths.  Mocking out twitter would be very good due to rate limiting and having high performance unit tests.
+jasmine tests can be run with SpecRunner.html, such as http://twittersearchfeed.herokuapp.com/SpecRunner.html, and grunt jasmine or grunt unittest
 
-It looks like the 2 ways of clearing localstorage: 1) casper.evaluate of removing localStorage, and 2) adding a reset button that clears it; don't work well with casper js.  There is a manual way to remove the localStorage: 
+grunt test will run jshint, unittest, and ftest
+
+The Feed model and the FeedItems Collections are coupled to the localStorage.  There's a bit more unit testing that could be done, such as checking for max lengths.  
+
+It looks like the 2 ways of clearing localstorage: 1) casper.evaluate of removing localStorage (delete localStorage.feed and localStorage.removeItem('feed'), and 2) adding a reset button that clears it; don't work well with casper js.  There is a manual way to remove the localStorage: 
 rm ~/Library/Application\ Support/Ofi\ Labs/PhantomJS/http_localhost_0.localstorage
 
 I resorted to resetting the models in addition to removing localStorage when a custom reset method is called, typically via a hidden reset button.  After the models are reset, the UI resets to the search state as there are just empty models then.  This workaround enables the casper ftests to run to completion.
@@ -100,12 +108,8 @@ There could be more unit tests or ftests, such as images correctly displayed, ex
 
 TODO: 
 
-* Sep 15 changes broke jsdoc
-* restart aborted automated jshint in grunt
-* restart aborted automated jasmine in grunt
-* restart aborted backbone localStorage
 * Clean up FTest.js dup code
-* fix jasmine test fixtures needing to be in SpecRunner.html
+* Clean up automated github and heroku deployment
 
 #Installation
 
@@ -115,6 +119,7 @@ TODO:
 * npm install grunt-shell
 * npm install grunt-contrib-jasmine
 * npm install requirejs
+* npm install grunt-jsdoc
 * npm install -g git://github.com/jsdoc3/jsdoc.git
 
 ## Valiant attempts

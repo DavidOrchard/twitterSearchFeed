@@ -13,7 +13,7 @@ require.config( {
     jquery: 'lib/jquery',
     underscore: 'lib/underscore',
     backbone: 'lib/backbone',
-		backboneLocalStorage: 'lib/backbone.localStorage',
+    backboneLocalStorage: 'lib/backbone.localStorage',
     newsfeedstatic: 'test/newsfeedstatic',
 
     // Plugins
@@ -22,20 +22,20 @@ require.config( {
     text: 'text'
   },
   shim: {
-		underscore: {
-			exports: '_'
-		},
-		backbone: {
-			deps: [
-				'underscore',
-				'jquery'
-			],
-			exports: 'Backbone'
-		},
-		backboneLocalStorage: {
-			deps: ['backbone'],
-			exports: 'Store'
-		},
+    underscore: {
+      exports: '_'
+    },
+    backbone: {
+      deps: [
+        'underscore',
+        'jquery'
+      ],
+      exports: 'Backbone'
+    },
+    backboneLocalStorage: {
+      deps: ['backbone'],
+      exports: 'Store'
+    },
     // Jasmine-jQuery plugin
     "jasminejquery": {
         deps:['jquery'],
@@ -85,6 +85,7 @@ function($,
                   };
 
   var testData0 = {statuses : []};
+  var testDataError0 = {"errors":[{"message":"Rate limit exceeded","code":88}]};
 
         // Test suite that includes all of the Jasmine unit tests
         describe("Twitter Search", function() {
@@ -94,8 +95,8 @@ function($,
 
               // Runs before every View spec
               beforeEach(function() {
-
-                setFixtures('');
+                jasmine.getFixtures().fixturesPath = "./js/test/specs/";
+                loadFixtures('TestHTMLFixture.html');
                 this.feedModel = new FeedModel();
               });
 
@@ -109,7 +110,7 @@ function($,
                   
                   this.feedItemsCollection = new FeedItemsCollection();
                   this.feedItemsCollection.fetchRemote();
-                   this.feedItemsCollectionView = new FeedItemsCollectionView({
+                  this.feedItemsCollectionView = new FeedItemsCollectionView({
                     collection: this.feedItemsCollection,
                   });
 
@@ -138,20 +139,26 @@ function($,
                  var searchButton = ".searchsubmit";
                  var refreshButton = ".refreshsubmit";
                  var resetButton = ".resetsubmit";
+                 var otherError = ".otherError";
+                 var noSearchResults = ".noSearchResults";
+                 var searchSection = ".feeditemssearch";
+                 var feedItemsCollection = ".feeditemscollectioncontainer";
                  
                  beforeEach( function (){
-                   //setFixtures('<section id="feedcontainer"><span class="searchsubmit" type="button" title="Get Tweets" ></span><section class="feeditemscollectioncontainer"><span class="refreshsubmit" title="Refresh Search" label="Refresh Search"></span>Results for <strong class="querystring"></strong><section class="feeditemscollection"></section></section></section>');
                    this.feedView = new FeedView({model: new FeedModel()});
                    spyOn(this.feedView, 'search');
                    spyOn(this.feedView, 'refresh');
                    spyOn(this.feedView, 'reset');
                    spyOn(this.feedView, 'showFeedItemCollection');
-                   spyOn(this.feedView, 'showNoSearchResults');
+                   spyOn(this.feedView, 'showErrorMessage');
                    spyOnEvent(searchButton, 'click');
                    spyOnEvent(refreshButton, 'click');
                    spyOnEvent(resetButton, 'click');
                    this.feedView.delegateEvents();
+                   this.feedView.$el.find(resetButton).click();
+                   delete localStorage.feed;
                  });
+                 
 
                 it('searchButton click should generate click event', function() {
                   $(searchButton).click();
@@ -181,18 +188,45 @@ function($,
                   expect(this.feedView.reset).toHaveBeenCalled();
                  });
 
-/** The Spy isn't getting called, not sure why.  The showNoSearchResults is actually being called.  Setting a breakpoint shows the spy in place.
-               it('No item in FeedItemsCollection after search should call showNoSearchResults', function () {
-                  this.feedView.feedItemsCollection.update(testData0);
-                  expect(this.feedView.showNoSearchResults).toHaveBeenCalled();
+                it('error in search should generated should show error in otherError and no query stored in localStorage', function() {
+                  expect(localStorage.feed).toBeUndefined();
+                  var ajaxMock = spyOn($, 'ajax').andCallFake(function (options) {
+                        options.success(testDataError0);
+                  });  
+                  this.feedView.feedItemsCollection.fetchRemote();
+                  expect(this.feedView.$el.find(searchSection)).toBeVisible();
+                  expect(this.feedView.$el.find(otherError)).toBeVisible();
+                  expect(this.feedView.$el.find(noSearchResults)).toBeHidden();
+                  expect(this.feedView.$el.find(feedItemsCollection)).toBeHidden();
+                  expect(localStorage.feed).toBeUndefined();
+// The Spy isn't getting called, not sure why.  The showErrorMessage is actually being called.  
+// Setting a breakpoint shows the spy in place.
+//                  expect(this.feedView.showErrorMessage).toHaveBeenCalled();  
                 });
-
-                  it('Adding item in FeedItemsCollection after search should call showFeedItemCollection', function () {
-                  this.feedView.feedItemsCollection.update(testData1);
-                  //expect('successfulSearch').toHaveBeenTriggeredOn(this.feedView.feedItemsCollection  );
-                  expect(this.feedView.showFeedItemCollection).toHaveBeenCalled();
+                it('No search results should generated should show error in noSearchResults and no query stored in localStorage', function() {
+                  var ajaxMock = spyOn($, 'ajax').andCallFake(function (options) {
+                        options.success(testData0);
+                  });  
+                  this.feedView.feedItemsCollection.fetchRemote();
+                  expect(this.feedView.$el.find(searchSection)).toBeVisible();
+                  expect(this.feedView.$el.find(otherError)).toBeHidden();
+                  expect(this.feedView.$el.find(noSearchResults)).toBeVisible();
+                  expect(this.feedView.$el.find(feedItemsCollection)).toBeHidden();
+                  expect(localStorage.feed).toBeUndefined();
+//                  expect(this.feedView.showErrorMessage).toHaveBeenCalled();  
                 });
-*/
+                it('Valid search results should generated should show search results and query stored in localStorage', function() {
+                  var ajaxMock = spyOn($, 'ajax').andCallFake(function (options) {
+                    options.success(testData15);
+                  });  
+                  this.feedView.feedItemsCollection.fetchRemote();
+                  expect(this.feedView.$el.find(searchSection)).toBeHidden();
+                  expect(this.feedView.$el.find(otherError)).toBeHidden();
+                  expect(this.feedView.$el.find(noSearchResults)).toBeHidden();
+                  expect(this.feedView.$el.find(feedItemsCollection)).toBeVisible();
+                  expect(localStorage.feed).not.toBeUndefined();
+//                  expect(this.feedView.showFeedItemCollection).toHaveBeenCalled();  
+                });
                });
 
             }); // End of the View test suite
@@ -239,14 +273,31 @@ function($,
              this.collection.query="test5";
              $.ajax.andCallFake(function (options) { options.success(testData1);});  
              this.collection.refresh();
-             expect($.ajax.mostRecentCall.args[0]["url"]).toContain("q%3Dtest5");
-             expect($.ajax.mostRecentCall.args[0]["url"]).toContain("since_id%3D377465033191485441");
+             expect($.ajax.mostRecentCall.args[0].url).toContain("q%3Dtest5");
+             expect($.ajax.mostRecentCall.args[0].url).toContain("since_id%3D377465033191485441");
            });
 
-          it("should fire unsuccessfulSearch event after update with no items previously", function () {
+          it("should fire unsuccessfulSearch event after empty update with no items previously", function () {
             var spy = jasmine.createSpy('');
             this.collection.bind('unsuccessfulSearch', spy);
             $.ajax.andCallFake(function (options) { options.success(testData0);});  
+            this.collection.refresh();
+            expect(spy).toHaveBeenCalled();
+          });
+
+          it("should fire unsuccessfulSearch event after error with no items previously", function () {
+            var spy = jasmine.createSpy('');
+            this.collection.bind('unsuccessfulSearch', spy);
+            $.ajax.andCallFake(function (options) { options.success(testDataError0);});  
+            this.collection.refresh();
+            expect(spy).toHaveBeenCalled();
+          });
+ 
+          it("should fire unsuccessfulSearch event after error with items previously", function () {
+            this.collection.fetchRemote();
+            var spy = jasmine.createSpy('');
+            this.collection.bind('unsuccessfulSearch', spy);
+            $.ajax.andCallFake(function (options) { options.success(testDataError0);});  
             this.collection.refresh();
             expect(spy).toHaveBeenCalled();
           });

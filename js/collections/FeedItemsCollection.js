@@ -70,8 +70,8 @@ define([
         var that = this;
         if(! this.intervalId) {
           this.intervalId = window.setInterval(function () {
-            that.refresh();}
-            , common.autoRefreshInterval);
+            that.refresh();
+            }, common.autoRefreshInterval);
           }
       },
 
@@ -94,16 +94,19 @@ define([
       * @param {String} response server response
       */
       parse: function( response ) {
-        if( response !== undefined && response.statuses !== undefined) {
-          if( this.length == 0 ) {
+        if( this.localStorage === undefined && this.localStorageTemp !== undefined) {
+          this.localStorage = this.localStorageTemp;
+          delete this.localStorageTemp;
+        }
+        if( response !== undefined  && response.statuses !== undefined && response.statuses.length !== undefined ) {
+          if( this.length === 0 ) {
             if( response.statuses.length > 0 ) {
               this.trigger('successfulSearch');
               this.setAutoRefresh();
             } else {
-              this.trigger('unsuccessfulSearch');
+              this.trigger('unsuccessfulSearch', {message:"no data"});
             }
           }
-
           // Preserve the maxFeedItemsCollectionSize
           // In cases of small values, this ui may flash as items are removed from the bottom and then items added at the top
           // Alternatively, on the add event from the sync, remove items to preserve
@@ -111,10 +114,15 @@ define([
             this.pop();
           }
           var that = this;
-          var newArray = new Array();
+          var newArray = [];
           response.statuses.forEach(function(element, index ) { newArray.unshift(that.filter(element));});
           return newArray;
-        } 
+
+        } else if( response !== undefined && response.errors !== undefined && response.errors[0] !== undefined && response.errors[0].message !== undefined) {
+          this.trigger('unsuccessfulSearch', {message:response.errors[0].message});
+        } else {
+          this.trigger('unsuccessfulSearch', {message:"unknown error"});         
+        }
         return [];
       },
 
@@ -131,25 +139,26 @@ define([
        * model differs from its current attributes, they will be overridden,
        * triggering a `"change"` event.
        *
+       * Removes localStorage from the collection for the next synch call, then adds it back
+       * By the time the callbacks from the fetch are executed, the localStorage will be back in
+       * so any new data will be persisted to localStorage.  Updating this.localStorage in the 
+       * complete callback is too late as that happens after all the models are added and localStorage 
+       * has to be ready.
+       *
+       * There are at least 3 alternatives:
+       * 1) the previous solution was to copy the backbone fetch function in it's entirety, modifying the sync call
+       * 2) add something like "remote:true" to the options, and used by backbone localstorage to do the correct
+       * sync call
+       * 3) add a beforeParse
+       *
        * @param {Object} options
        * 
-       * this is a copy of the Backbone Sync method but it uses ajaxSync instead of sync as sync is taken with localstorage
        */
       fetchRemote: function(options) {
-        options = options ? _.clone(options) : {};
-        // Below is a hack to solve a problem that only happens in minification, where sort order is not preserved
-        options.sort = true;
-        if (options.parse === void 0) options.parse = true;
-        var model = this;
-        var success = options.success;
-        options.success = function(resp) {
-          // model.set does a model.parse
-          if (!model.set(resp, options)) return false;
-          if (success) success(model, resp, options);
-          model.trigger('sync', model, resp, options);
-        };
-        //wrapError(this, options);
-        return Backbone.ajaxSync('read', this, options);
+        this.localStorageTemp = this.localStorage;
+        delete this.localStorage;
+        delete this.__proto__.localStorage;
+        return this.fetch(options);
       },
 
       /** refresh the list of feedItems from the server, not removing items that are local but not in server response */

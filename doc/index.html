@@ -40,6 +40,138 @@
 
 
 
+    <section>
+        <article><h1>twitterSearchFeed</h1>
+
+<p>A simple Twitter search feed</p>
+
+<p>Problem Description
+Using only standard CSS, HTML, Javascript, Backbone, Underscore, JQuery (not JQuery UI or JQuery plugins) and the Twitter 1.0 API, this is a basic functioning Twitter search feed. </p>
+
+<p>When first opened, the application prompts the user to enter a search string to initialize the twitterfeed. On subsequent openings, the app remembers the last search the user performed. </p>
+
+<p>The application automatically displays new tweets in the search stream using a time interval, and also provides a button for the user to manually refresh the stream without reloading the page.</p>
+
+<p>The application uses one Backbone view, model, and collection and make uses of an Underscore template to display the following tweet metadata.  A tweet does not need to support clickable URLs, clickable username or show embedded media):</p>
+
+<ul><li>from<em>user</em>name</li><li>profile_image</li><li>tweet text</li><li>create date</li></ul>
+
+<p>The design is focused towards the &quot;average&quot; non-technical user. It takes careful note of edge cases and error resolution process (both programmatically and in the UI).</p>
+
+<h2>Areas of Focus</h2>
+
+<ul><li>Clean code</li><li>Succinct yet clear documentation</li><li>Edge case handling</li><li>Pleasant operation</li><li>Accurate results</li><li>Demonstrable understanding of core web technologies</li></ul>
+
+<h1>Resources</h1>
+
+<ul><li>Backbone JS: http://backbonejs.org/</li><li>Underscore JS: http://underscorejs.org/</li><li>JQuery through Google CDN: https://developers.google.com/speed/libraries/devguide</li><li>Twitter Search API: https://dev.twitter.com/docs/api/1.1/get/search</li><li>RequireJS</li><li>CasperJS</li></ul>
+
+<h1>Architecture and Design</h1>
+
+<h2>Visual design</h2>
+
+<p>The app starts with some explanative text and a search input, styled as a search input and with a search button.  Upon tapping the search button and having more than 0 results, the search input is hidden, results are displayed and a refresh icon is displayed.  If there are no results, a no results section is displayed and the search remains.  The search results are persisted to the device and are available if the user visits the app again.</p>
+
+<p>There is explicitly no &quot;fancy&quot; UI, such as:
+ <em> pull to refresh
+ </em> spinner during search or refresh
+ <em> change the time interval for auto-refresh
+ </em> show new tweets such as a highlight or the twitter style (n new results, tap to show)
+ <em> show time of last refresh
+ </em> show offline/online state
+ <em> pagination of long results
+ </em> login so my personal oauth credentials are used.
+ <em> warning the user if localStorage isn&#39;t available
+ </em> bookmarking the app
+ <em> reasonable styling, shading, corners...
+ </em> a button to cancel the persisted search</p>
+
+<h2>Application Architecture and design</h2>
+
+<p>The application is primarily javascript using Backbone and RequireJS.  It uses a twitter proxy due to browser same origin policy. </p>
+
+<p>The twitter best practices guide says &quot;Include a since<em>id when asking for Tweets. since</em>id should be set to the value of the last Tweet you received or the max<em>id from the Search API response. If the since</em>id you provide is older than the index allows, it will be updated to the oldest since<em>id available.&quot; so the since</em>id or the max_id from the previous search is used</p>
+
+<p>The Twitter app is at https://dev.twitter.com/apps/5062978/show, twitsearchfeed is the brilliant name</p>
+
+<p>The app uses the php twitter proxy from http://mikerogers.io/2013/02/25/how-use-twitter-oauth-1-1-javascriptjquery.html.  I added a check for max URL length of about 1020 characters. I changed it so the blacklist is a pattern match on the url to allow search queries to go through, rather than exact matches as originally designed.  The proxy does not filter the response data, that&#39;s an obvious future performance enhancement.
+whitelist.  </p>
+
+<p>It is deployed on heroku at http://twittersearchfeed.herokuapp.com/</p>
+
+<p>Grunt automates the running of jsdoc, jshint, jasmine unit tests, casperjs functional tests, and deployment to git.  grunt test will run jshint, jasmine unit tests and casperjs ftests.</p>
+
+<p>There is a backbone model for a feed item and a feed, a collection of feed items.  There are views for a feed, a feed items collection and a feed item.  With approval, the statement &quot;The application uses one Backbone view, model, and collection&quot; is interpreted as one or more views, one or more models, and one or more collections.  Moving the feed, feedItem, and feedItemsCollection into one view doesn&#39;t seem natural.   </p>
+
+<p>As Sep 16th, the FeedItemsCollection uses Backbones built in URL handling with parsing.  backbone.localStorage is used to persist the Feed model and the feedItemsCollection.  There is conflict between the fetch for localStorage and the fetch for the twitter search.  There is a fetchRemote function to disambiguate.  There can be duplicate sync events issued after the local or remote stores have been fetched.  It would be good for backbone to have a way for the store provider to indicate which store was synced. </p>
+
+<p>The UI is performant on refresh as any new tweets are inserted at the top and the existing tweets are not rendered.  There is a maximum number of tweets that are stored to prevent out of memory errors and sluggishness.  Extra models are removed and the DOM nodes are removed.  I believe this means they really are removed and do not become zombies, but I&#39;m not 100% positive.  The feeditems are fairly minimal in their markup.  Each element is required for a css selector, and no more.</p>
+
+<p>There is currently no mechanism to rate limit a users requests including auto-refresh.</p>
+
+<p>The search and refresh icons are from Hootsuite&#39;s desktop app.  They should be a bit larger.</p>
+
+<p>If localStorage is not available, the app still functions but without persistence. It wasn&#39;t worth making a custom modernizr build to just check for localStorage.  </p>
+
+<p>Note: to restart and kill the previous search, enter the javascript console and type localStorage.clear(). Alternatively, localStorage can be disabled using incognito mode.</p>
+
+<h1>Testing</h1>
+
+<p>The files pass jshint, with 2 warnings excluded.  grunt jshint runs the jshint tests.</p>
+
+<p>Casperjs tests can be run with casperjs test js/test/FTest.js or grunt casperjs or grunt ftest</p>
+
+<p>jasmine tests can be run with SpecRunner.html, such as http://twittersearchfeed.herokuapp.com/SpecRunner.html, and grunt jasmine or grunt unittest</p>
+
+<p>grunt test will run jshint, unittest, and ftest</p>
+
+<p>The Feed model and the FeedItems Collections are coupled to the localStorage.  There&#39;s a bit more unit testing that could be done, such as checking for max lengths.  </p>
+
+<p>It looks like the 2 ways of clearing localstorage: 1) casper.evaluate of removing localStorage (delete localStorage.feed and localStorage.removeItem(&#39;feed&#39;), and 2) adding a reset button that clears it; don&#39;t work well with casper js.  There is a manual way to remove the localStorage: 
+rm ~/Library/Application\ Support/Ofi\ Labs/PhantomJS/http<em>localhost</em>0.localstorage</p>
+
+<p>I resorted to resetting the models in addition to removing localStorage when a custom reset method is called, typically via a hidden reset button.  After the models are reset, the UI resets to the search state as there are just empty models then.  This workaround enables the casper ftests to run to completion.</p>
+
+<p>There could be more unit tests or ftests, such as images correctly displayed, exact correct formatting of the elements, etc.  It is important to only test the external behavior, not the internals.  This allows for refactoring and changes without needless test rewrites.  Also, the FTest.js file has some duplicate code because there are problems guaranteeing ordering of executing.</p>
+
+<p>TODO: </p>
+
+<ul><li>Sep 15 changes broke jsdoc</li><li>Clean up FTest.js dup code</li><li>Clean up automated github and heroku deployment</li></ul>
+
+<h1>Installation</h1>
+
+<h2>Grunt</h2>
+
+<ul><li>npm install -g grunt-cli</li><li>npm install</li><li>npm install grunt-shell</li><li>npm install grunt-contrib-jasmine</li><li>npm install requirejs</li><li>npm install grunt-jsdoc</li><li>npm install -g git://github.com/jsdoc3/jsdoc.git</li></ul>
+
+<h2>Valiant attempts</h2>
+
+<p>Couldn&#39;t split casperjs tests into multiple files per https://gist.github.com/n1k0/3813361.  The waitFor doesn&#39;t wait in file like:
+  var x = require(&#39;casper&#39;).selectXPath;
+  casper.test.comment(&quot;Ftest&quot;);
+  casper.start(&quot;http://localhost/~dave/twittersearchfeed/&quot;);
+  casper.waitForSelector(&quot;form input#query&quot;,
+    function success() {
+       this.click(&quot;form input#query&quot;);
+    },
+    function fail() {
+      test.assertExists(&quot;form input#query&quot;, &quot;Twitter Search Feed down the middle tests: form input#query&quot;);
+    });
+  casper.echo(&quot;finished waiting&quot;);</p>
+
+<p>Can&#39;t run multiple casperjs suites per file per https://groups.google.com/forum/#!topic/casperjs/VrtkdGQl3FA</p>
+
+<p>Something has broken recently in grunt-contrib-jasmine and previously working tests and these tests don&#39;t run.  I tried both normal and --save-dev versions.  A common problem is The 0.5.1 version of jasmine-phantomjs has a rights problem so you may need to 
+sudo chmod a+x node<em>modules/grunt-contrib-jasmine/node</em>modules/grunt-lib-phantomjs/node<em>modules/phantomjs/lib/phantom/bin/phantomjs
+Even after that, the loading of the js/test/specs/spec.js in the generated </em>SpecRunner.html timesout.</p>
+
+<h2>Other things</h2>
+
+<p>I spent at least half and maybe 2/3 of the effort on the casperjs tests.  I found it a very fragile and unpolished product.  See the previous comments about inability to split tests into suites within a file and across files, needing to manually reset localStorage.  Many things just don&#39;t work.  I found the ordering of the tests to be fairly random.  I eneded up wrapping a lot of calls in then() and this made the test code even more complicated.</p>
+
+<p>I originally posted this on Sep 11, but I mistakenly put my twitter OAuth keys in the first commit. I had to remove that commit for obvious reasons.  The only way to rebase onto a first commit (one without a parent) is to rebase -i all the commits after, then reset to the first commit, git add ., git commit --amend, git push.  Doc&#39;d in http://feeding.cloud.geek.nz/posts/combining-multiple-commits-into-one/.  Unfortunately that lost the git history from Sep 12 to Sep 13th.  I have put a version from noonish on Sept 12th at branch &quot;sept12&quot;</p></article>
+    </section>
+
 
 
 
@@ -48,15 +180,13 @@
 </div>
 
 <nav>
-    <h2><a href="index.html">Index</a></h2><h3>Modules</h3><ul><li><a href="_.html">App
-
-All the requires are here for easy cut 'n paste in other files</a></li><li><a href="module-FeedItemModel.html">FeedItemModel</a></li><li><a href="module-FeedItemsCollection.html">FeedItemsCollection</a></li><li><a href="module-FeedItemsCollectionView.html">FeedItemsCollectionView</a></li><li><a href="module-FeedItemView.html">FeedItemView</a></li><li><a href="module-FeedModel.html">FeedModel</a></li><li><a href="module-FeedView.html">FeedView</a></li><li><a href="module-mobileRouter.html">mobileRouter</a></li></ul><h3>Global</h3><ul><li><a href="global.html#enterTermAndClick">enterTermAndClick</a></li><li><a href="global.html#inputSelector">inputSelector</a></li></ul>
+    <h2><a href="index.html">Index</a></h2><h3>Modules</h3><ul><li><a href="module-common.html">common</a></li><li><a href="module-FeedItemModel.html">FeedItemModel</a></li><li><a href="module-FeedItemsCollection.html">FeedItemsCollection</a></li><li><a href="module-FeedItemsCollectionView.html">FeedItemsCollectionView</a></li><li><a href="module-FeedItemView.html">FeedItemView</a></li><li><a href="module-FeedModel.html">FeedModel</a></li><li><a href="module-FeedView.html">FeedView</a></li><li><a href="module-mobileRouter.html">mobileRouter</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0-dev</a> on Sat Sep 14 2013 14:49:47 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a> on Wed Sep 18 2013 23:54:03 GMT-0700 (PDT)
 </footer>
 
 <script> prettyPrint(); </script>

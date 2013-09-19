@@ -44,7 +44,7 @@ define(function(require) {
       console.log("An object of FeedView was created");
       this.model.on('reset', _.bind(this.render, this));
       this.feedItemsCollection.on('successfulSearch', _.bind(this.showFeedItemCollection, this));
-      this.feedItemsCollection.on('unsuccessfulSearch', _.bind(this.showNoSearchResults, this));
+      this.feedItemsCollection.on('unsuccessfulSearch', _.bind(this.showErrorMessage, this));
 
       // The stored item has already been parsed and we can't double parse.
       if(this.model.get('query') !== undefined) {
@@ -76,7 +76,7 @@ define(function(require) {
     /** Show the search form and hide the feed items with refresh and no results containers */
     showSearch : function() {
       $(".feeditemssearch").show();      
-      $(".nosearchresults").hide();     
+      $(".errormessage").hide();     
       $(".feeditemscollectioncontainer").hide();
     },
     
@@ -84,16 +84,24 @@ define(function(require) {
     showFeedItemCollection : function () {
       $(".feeditemssearch").hide();     
       $(".feeditemscollectioncontainer").show();
-      $(".nosearchresults").hide();
+      $(".errormessage").hide();
       
       // the model is now good.
       this.model.save();
     },
     
     /** Show the search form and the no results container and hide the feed items conatiner */
-    showNoSearchResults : function (query) {
+    showErrorMessage : function (event) {
+      if(event !== undefined && event.message !== undefined && event.message != "no data" ) {
+        $(".otherError").text(event.message);
+        $(".otherError").show();
+        $(".noSearchResults").hide();
+      } else {
+        $(".otherError").hide();
+        $(".noSearchResults").show();        
+      }
       $(".feeditemssearch").show();      
-      $(".nosearchresults").show();           
+      $(".errormessage").show();           
       $(".feeditemscollectioncontainer").hide();
     },
     

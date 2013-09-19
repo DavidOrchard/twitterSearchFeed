@@ -38,110 +38,165 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 define([
   'underscore',
   'backbone',
-  'models/FeedItem'
-], function(_, Backbone, FeedItemModel){
-  'use strict';
-  var FeedItemsCollection = Backbone.Collection.extend({
-    model: FeedItemModel,
-    maxSize: 50,
-    
-    /** save the collection to localStorage */
-    save: function () {
-      try {
-        localStorage.feedItemsCollection = JSON.stringify(this.toJSON());
-      } catch (e) {        
-      }
-    },
+  'backboneLocalStorage',
+  'models/FeedItem',
+  'common'
+  ], function(_, Backbone, Store, FeedItemModel, common){
+    'use strict';
+    var FeedItemsCollection = Backbone.Collection.extend({
+      model: FeedItemModel,
+      localStorage: new Store("feeditemscollection"),
 
-    /** read the collection from localStorage */
-    read: function() {
-      var feedItemsFromLocalStorage = null;
-      try {
-        if( localStorage.feedItemsCollection !== undefined ){
-          feedItemsFromLocalStorage = JSON.parse(localStorage.feedItemsCollection);
-          this.add(feedItemsFromLocalStorage);
-        }
-      } catch( e) {
-        // if there's any problems parsing the stored stuff, at least get us back to a stable state
-        this.reset();
-      }
-      return(feedItemsFromLocalStorage);
-    },
-
-    /** clear the localStorage and reset the model */
-    reset: function() {
-      try {
-        localStorage.removeItem("feedItemsCollection");
-      } catch (e) {        
-      }
-    },
-    
-    /** update the collection with the new feed_items
-     *
-     * VIP NOTE: This does not uses the backbone native url, fetch and parse routines by design
-     * Backbone after-parse gives no event when the fetched items have been added to the model
-     * so there is no way of knowing when to save the model to localStorage
-     * Also, this gives the ability to move items off the bottom one at a time as others are
-     * being added, rather than a big jump of removing a bunch of items before backbone
-     * after-parse runs.
-     */
-     update: function(feedItems) {
-       if(feedItems !== undefined && feedItems.statuses !== undefined ) {
-         var statuses = feedItems.statuses;
-         // If there is a feedItem returned and none, then fire a successfulSearch message
-         if( this.length == 0 ) {
-            if( statuses.length > 0 ) {
-              this.trigger('successfulSearch');
-            } else {
-              this.trigger('unsuccessfulSearch');
-            }
-         }
-         for(var i = statuses.length -1 ; i >= 0; i--) {
-            this.unshift(statuses[i]);
-            while(this.length > this.maxSize ) {
-              this.pop();
-            }
-         }
-         this.save();
-       }
-     },
-     
-     /** call the twitter search api using the proxy
-       * @param {string} query the search query 
-       * @param {function} callback
-       */
-      callQuery: function(query, callback) {
-        // format per twitter-proxy.php?url='+encodeURIComponent('statuses/user_timeline.json?screen_name=MikeRogers0&count=2')
-        // twitter search = https://api.twitter.com/1.1/search/tweets.json
-        var url = "twitter-proxy.php?url=";
-        // we encode the query to handle any special characters properly
-         url += encodeURIComponent("search/tweets.json?q="+query);
-          $.get(url, function(data) {
-            callback(data);
-          }, 
-          'json');     
-      },
-
-      search : function (query) {
-        var that = this;
-        this.callQuery(query, function(data) {
-          if( data.statuses !== undefined && data.statuses.length > 0) {
-            that.update(data );
-          }        
+      initialize: function(){
+        this.bind('sync', function(model, collection, options) {
+          this.setAutoRefresh();
+        });
+        this.bind('add', function(model, collection, options) {
+          if( model.isNew()) {
+            model.save();
+          }
+        });
+        this.bind('remove', function(model, collection, options) {
+          model.destroy();
         });
       },
 
-      refresh : function (query) {
-        var lastId = this.models[0].attributes.id_str;
-        // encode the query to handle any special characters properly
+      comparator : "id_str",
+
+      /** clear the localStorage and reset the model */
+      reset: function() {
+        try {
+          Backbone.Collection.prototype.reset.call(this);
+          this.clearAutoRefresh();
+        } catch (e) {        
+        }
+      },
+
+      /** filter the feed items
+      * Filters the json data to store the flattened:
+      * id_str
+      * user.profile_image_url
+      * user.screen_name
+      * text
+      * created_at
+      *
+      * Note, there is a conflict between twitter ids and backbone ids.  If a model has an id, then isNew() reports false so it wouldn't be saved.  
+      * Naming is hard....
+      */
+      filter: function(feedItem) {
+        return {id_str        : feedItem.id_str,
+          profile_image_url   : feedItem.user.profile_image_url, 
+          screen_name         : feedItem.user.screen_name, 
+          text                : feedItem.text,
+          created_at          : feedItem.created_at
+        };
+      },
+
+      /** set the auto refresh, usually only on successful query */
+      setAutoRefresh: function() {
         var that = this;
-        this.callQuery(query + "&since_id="+lastId, function(data) { that.update(data); }, 'json');    
+        if(! this.intervalId) {
+          this.intervalId = window.setInterval(function () {
+            that.refresh();
+            }, common.autoRefreshInterval);
+          }
+      },
+
+      /** clear the auto refresh, probably only happen on reset */
+      clearAutoRefresh: function() {
+        window.clearInterval(this.intervalId);
+      },
+
+      /** format the URL for search requests
+       * format per twitter-proxy.php?url='+encodeURIComponent('statuses/user_timeline.json?screen_name=MikeRogers0&count=2')
+       * twitter search = https://api.twitter.com/1.1/search/tweets.json
+       * we encode the query to handle any special characters properly
+       */
+      url: function() {
+        return "twitter-proxy.php?url="+encodeURIComponent("search/tweets.json?q="+this.query + (this.models.length > 0 ? ("&since_id="+this.models[this.models.length - 1].attributes.id_str) : ""));
+      },
+
+      /** returns a filtered response with space for the incoming items.  Generates successfulSearch or unsuccessfulSearch depending upon response value
+      *
+      * @param {String} response server response
+      */
+      parse: function( response ) {
+        if( this.localStorage === undefined && this.localStorageTemp !== undefined) {
+          this.localStorage = this.localStorageTemp;
+          delete this.localStorageTemp;
+        }
+        if( response !== undefined  && response.statuses !== undefined && response.statuses.length !== undefined ) {
+          if( this.length === 0 ) {
+            if( response.statuses.length > 0 ) {
+              this.trigger('successfulSearch');
+              this.setAutoRefresh();
+            } else {
+              this.trigger('unsuccessfulSearch', {message:"no data"});
+            }
+          }
+          // Preserve the maxFeedItemsCollectionSize
+          // In cases of small values, this ui may flash as items are removed from the bottom and then items added at the top
+          // Alternatively, on the add event from the sync, remove items to preserve
+          while(this.length + response.statuses.length > common.maxFeedItemsCollectionSize ) {
+            this.pop();
+          }
+          var that = this;
+          var newArray = [];
+          response.statuses.forEach(function(element, index ) { newArray.unshift(that.filter(element));});
+          return newArray;
+
+        } else if( response !== undefined && response.errors !== undefined && response.errors[0] !== undefined && response.errors[0].message !== undefined) {
+          this.trigger('unsuccessfulSearch', {message:response.errors[0].message});
+        } else {
+          this.trigger('unsuccessfulSearch', {message:"unknown error"});         
+        }
+        return [];
+      },
+
+      /** search using query passed in. Store the query
+       *
+       * @param {String} query
+       */
+      search : function (query) {
+        this.query = query;     
+        this.fetchRemote();
+      },
+      
+      /**  Fetch the model from the server. If the server's representation of the
+       * model differs from its current attributes, they will be overridden,
+       * triggering a `"change"` event.
+       *
+       * Removes localStorage from the collection for the next synch call, then adds it back
+       * By the time the callbacks from the fetch are executed, the localStorage will be back in
+       * so any new data will be persisted to localStorage.  Updating this.localStorage in the 
+       * complete callback is too late as that happens after all the models are added and localStorage 
+       * has to be ready.
+       *
+       * There are at least 3 alternatives:
+       * 1) the previous solution was to copy the backbone fetch function in it's entirety, modifying the sync call
+       * 2) add something like "remote:true" to the options, and used by backbone localstorage to do the correct
+       * sync call
+       * 3) add a beforeParse
+       *
+       * @param {Object} options
+       * 
+       */
+      fetchRemote: function(options) {
+        this.localStorageTemp = this.localStorage;
+        delete this.localStorage;
+        delete this.__proto__.localStorage;
+        return this.fetch(options);
+      },
+
+      /** refresh the list of feedItems from the server, not removing items that are local but not in server response */
+      refresh : function () {
+        this.fetchRemote({remove: false});
       }
 
-  });
-  
-  return FeedItemsCollection;
-});</code></pre>
+    });
+
+    return FeedItemsCollection;
+  });</code></pre>
         </article>
     </section>
 
@@ -151,15 +206,13 @@ define([
 </div>
 
 <nav>
-    <h2><a href="index.html">Index</a></h2><h3>Modules</h3><ul><li><a href="_.html">App
-
-All the requires are here for easy cut 'n paste in other files</a></li><li><a href="module-FeedItemModel.html">FeedItemModel</a></li><li><a href="module-FeedItemsCollection.html">FeedItemsCollection</a></li><li><a href="module-FeedItemsCollectionView.html">FeedItemsCollectionView</a></li><li><a href="module-FeedItemView.html">FeedItemView</a></li><li><a href="module-FeedModel.html">FeedModel</a></li><li><a href="module-FeedView.html">FeedView</a></li><li><a href="module-mobileRouter.html">mobileRouter</a></li></ul><h3>Global</h3><ul><li><a href="global.html#enterTermAndClick">enterTermAndClick</a></li><li><a href="global.html#inputSelector">inputSelector</a></li></ul>
+    <h2><a href="index.html">Index</a></h2><h3>Modules</h3><ul><li><a href="module-common.html">common</a></li><li><a href="module-FeedItemModel.html">FeedItemModel</a></li><li><a href="module-FeedItemsCollection.html">FeedItemsCollection</a></li><li><a href="module-FeedItemsCollectionView.html">FeedItemsCollectionView</a></li><li><a href="module-FeedItemView.html">FeedItemView</a></li><li><a href="module-FeedModel.html">FeedModel</a></li><li><a href="module-FeedView.html">FeedView</a></li><li><a href="module-mobileRouter.html">mobileRouter</a></li></ul>
 </nav>
 
 <br clear="both">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0-dev</a> on Sat Sep 14 2013 14:49:47 GMT-0700 (PDT)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.2.0</a> on Wed Sep 18 2013 23:54:03 GMT-0700 (PDT)
 </footer>
 
 <script> prettyPrint(); </script>

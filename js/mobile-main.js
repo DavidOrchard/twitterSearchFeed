@@ -10,38 +10,39 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 /** main entry point into the application */
 
 require.config({
+  baseUrl: "js",
   shim: {
-		underscore: {
-			exports: '_'
-		},
-		backbone: {
-			deps: [
-				'underscore',
-				'jquery'
-			],
-			exports: 'Backbone'
-		},
-		backboneLocalStorage: {
-			deps: ['backbone'],
-			exports: 'Store'
-		}
-	},
-	paths: {
+    underscore: {
+      exports: '_'
+    },
+    backbone: {
+      deps: [
+        'underscore',
+        'jquery'
+      ],
+      exports: 'Backbone'
+    },
+    backboneLocalStorage: {
+      deps: ['backbone'],
+      exports: 'Store'
+    }
+  },
+  paths: {
     jquery: 'lib/jquery',
     underscore: 'lib/underscore', 
     backbone: 'lib/backbone',
-		backboneLocalStorage: 'lib/backbone.localStorage',
+    backboneLocalStorage: 'lib/backbone.localStorage',
     text: 'text'
   }
 });
 
 define([
-	'jquery',
-	'underscore',
-	'backbone',
-	'models/Feed',
-	'routers/mobileRouter',
-	'views/Feed',
+  'jquery',
+  'underscore',
+  'backbone',
+  'models/Feed',
+  'routers/mobileRouter',
+  'views/Feed'
 ], function( $, _, Backbone, FeedModel, MobileRouter, FeedView) {
 
   new MobileRouter();

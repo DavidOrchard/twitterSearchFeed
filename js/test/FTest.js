@@ -12,14 +12,16 @@ var resetSubmitSelector = "span[class='resetsubmit']";
 var localhost = 'http://localhost/~dave/twittersearchfeed/';
 var heroku = 'http://twittersearchfeed.herokuapp.com/';
 // Can switch to ftest against running heroku instance
-var twitterSearchSite = localhost;
+//var twitterSearchSite = localhost;
+var twitterSearchSite = heroku;
 var autorefreshinterval = 30000;
 var maxItems = 50;
 
 var removeLocalStorageDirectAccess = function(testName) { 
     casper.evaluate(function() {
-      localStorage.removeItem('feedModel');
-      })};
+      delete localStorage.feed;
+      });
+    };
 
 var removeLocalStorageClickReset = function (testName, successCallback) { 
   casper.waitForSelector(resetSubmitSelector, 
@@ -137,7 +139,7 @@ casper.test.begin("Twitter Search Feed tests", {
 
 //                    casper.wait(5000);
 //                    casper.waitUntilVisible(refreshSubmitSelector, f, f);
-                      casper.waitFor(function() { var rl = casper.evaluate(feedItemLength); return rl > resultsLength}, f, f);
+                      casper.waitFor(function() { var rl = casper.evaluate(feedItemLength); return rl > resultsLength;}, f, f);
                   },
                   function fail() {
                     casper.capture(fileName4 + 'Fail.png');
@@ -188,7 +190,7 @@ casper.test.begin("Twitter Search Feed tests", {
        //can't do loops because of closure
        // loop 1
        casper.wait(1000);
-       casper.waitFor(function() { return feedItemLengthGreaterThan(14)},
+       casper.waitFor(function() { return feedItemLengthGreaterThan(14);},
          function success() {
            var resultsLength = casper.evaluate(feedItemLength);
            test.assert(resultsLength > 0, testText7 + " loop 1 reached has " + resultsLength + " tweets which > 0 results");
@@ -199,7 +201,6 @@ casper.test.begin("Twitter Search Feed tests", {
            casper.waitFor(function() { return feedItemLengthGreaterThan(resultsLength);},
              function success() {
                var resultsLength2 = casper.evaluate(feedItemLength);
-               casper.capture(fileName7 + 'Loop2.png');
                test.assert(resultsLength2 > resultsLength, testText7 + " loop 2 reached has " + resultsLength2 + " tweets which > " + resultsLength + " results");
                casper.wait(3000);
                casper.click(refreshSubmitSelector);
@@ -207,7 +208,6 @@ casper.test.begin("Twitter Search Feed tests", {
                casper.wait(2000);
                casper.waitFor(function() { return feedItemLengthGreaterThan(resultsLength2);},
                  function success() {
-                   casper.capture(fileName7 + 'Loop3.png');
                    var resultsLength3 = casper.evaluate(feedItemLength);
                    test.assert(resultsLength3 > resultsLength2, testText7 + " loop 3 reached has " + resultsLength3 + " tweets which > " + resultsLength2 + " results");
                    casper.wait(3000);
@@ -216,7 +216,6 @@ casper.test.begin("Twitter Search Feed tests", {
                    casper.wait(2000);
                    casper.waitFor(function() { return feedItemLengthGreaterThan(resultsLength3);},
                       function success() {
-                        casper.capture(fileName7 + 'Loop4.png');
                         var resultsLength4 = casper.evaluate(feedItemLength);
                         test.assert(resultsLength4 > resultsLength3, testText7 + " loop 4 reached has " + resultsLength4 + " tweets which > " + resultsLength3 + " results");
                         casper.wait(3000);
@@ -225,7 +224,6 @@ casper.test.begin("Twitter Search Feed tests", {
                         casper.waitFor(function() { return(feedItemLengthGreaterThan(resultsLength4) || resultsLength4 == maxItems);},
                         function success() {
                           var resultsLength5 = casper.evaluate(feedItemLength);
-                          casper.capture(fileName7 + 'AfterLoopsPass.png');
                           test.assertEquals(maxItems, resultsLength5, testText7 + " after all loops reached has "+resultsLength5+" results");
                          }, 
                         function fail() {
